@@ -1,0 +1,5 @@
+{"id":"1","timestamp":"2024-05-01T12:00:00.000+0000","agent":{"id":"001","name":"win-vm","ip":"10.0.0.5"},"rule":{"id":"5710","level":5,"description":"sshd: Attempt to login using a non-existent user","groups":["syslog","sshd"]},"full_log":"Failed password for invalid user admin from 10.0.0.9","location":"/var/log/auth.log"}
+{"id":"2","timestamp":"2024-05-01T12:05:00.000+0000","agent":{"id":"001","name":"win-vm","ip":"10.0.0.5"},"rule":{"id":"92052","level":12,"description":"Sysmon - Suspicious PowerShell execution","groups":["sysmon","windows"],"mitre":{"id":["T1059.001"],"tactic":["Execution"],"technique":["PowerShell"]}},"full_log":"powershell.exe -enc SQBFAFgA","location":"EventChannel"}
+
+this-is-a-corrupt-line-not-json
+{"id":"3","timestamp":"2024-05-01T12:10:00.000+0000","agent":{"id":"002","name":"kali","ip":"10.0.0.7"},"rule":{"id":"31151","level":14,"description":"Multiple web attack attempts","groups":["web","attack"],"mitre":{"id":["T1190"],"tactic":["Initial Access"],"technique":["Exploit Public-Facing Application"]}},"full_log":"GET /../../etc/passwd","location":"suricata"}

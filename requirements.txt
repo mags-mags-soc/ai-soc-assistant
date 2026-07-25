@@ -1,0 +1,6 @@
+pydantic>=2.9,<3
+python-dotenv>=1.0.1
+
+# --- dev / test ---
+pytest>=8.3
+pytest-cov>=5.0
