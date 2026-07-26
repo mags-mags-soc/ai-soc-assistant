@@ -1,4 +1,4 @@
-"""Application configuration."""
+"""Immutable runtime configuration loaded from environment variables."""
 
 from __future__ import annotations
 
@@ -28,6 +28,16 @@ def _env_int(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got {raw!r}") from exc
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ValueError(f"Environment variable {name} must be a float, got {raw!r}") from exc
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable runtime settings."""
@@ -37,6 +47,14 @@ class Settings:
     state_dir: Path
     log_level: str
     max_read_bytes: int
+
+    # AI engine settings
+    ai_api_key: str
+    ai_base_url: str
+    ai_model: str
+    ai_timeout: float
+    ai_max_retries: int
+    ai_temperature: float
 
     @classmethod
     def load(cls) -> "Settings":
@@ -49,6 +67,12 @@ class Settings:
             state_dir=_env_path("SOC_STATE_DIR", PROJECT_ROOT / "state"),
             log_level=os.getenv("SOC_LOG_LEVEL", "INFO").upper(),
             max_read_bytes=_env_int("SOC_MAX_READ_BYTES", 50 * 1024 * 1024),
+            ai_api_key=os.getenv("AI_API_KEY", ""),
+            ai_base_url=os.getenv("AI_BASE_URL", "https://routellm.abacus.ai/v1"),
+            ai_model=os.getenv("AI_MODEL", "gpt-4o-mini"),
+            ai_timeout=_env_float("AI_TIMEOUT", 60.0),
+            ai_max_retries=_env_int("AI_MAX_RETRIES", 3),
+            ai_temperature=_env_float("AI_TEMPERATURE", 0.2),
         )
 
 
