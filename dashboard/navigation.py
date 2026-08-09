@@ -15,14 +15,17 @@ class Page(str, Enum):
 
     OVERVIEW = "overview"
     ALERTS = "alerts"
+    DETAIL = "detail"
 
 
 PAGE_TITLES: Final[dict[Page, str]] = {
     Page.OVERVIEW: "Overview",
     Page.ALERTS: "Alert queue",
+    Page.DETAIL: "Alert detail",
 }
 
 PAGE_SUBTITLES: Final[dict[Page, str]] = {
     Page.OVERVIEW: "Queue health at a glance, newest detections first",
     Page.ALERTS: "Every alert loaded from the current source, newest first",
+    Page.DETAIL: "One alert in full: fields, AI analysis and incident report",
 }

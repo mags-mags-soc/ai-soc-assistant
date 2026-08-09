@@ -21,14 +21,22 @@ if __package__ in (None, ""):  # pragma: no cover - runtime bootstrap
 
 import streamlit as st
 
+from dashboard.analysis.base import AnalysisError
+from dashboard.analysis.factory import build_analysis_source
 from dashboard.components.sidebar import render_sidebar
 from dashboard.data.base import DataSourceError
 from dashboard.data.factory import build_data_source
 from dashboard.settings import DashboardSettings
-from dashboard.theme import build_css
+from dashboard.theme import DETAIL_CSS, build_css
 from dashboard.views import PAGE_RENDERERS
 
 log = logging.getLogger(__name__)
+
+
+@st.cache_resource
+def _analysis_source(settings: DashboardSettings):
+    """Build the analysis source once per session so its cache survives reruns."""
+    return build_analysis_source(settings)
 
 
 def main() -> None:
@@ -42,18 +50,20 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(build_css(), unsafe_allow_html=True)
+    st.markdown(DETAIL_CSS, unsafe_allow_html=True)
 
     state = render_sidebar(settings)
 
     try:
         source = build_data_source(settings)
         alerts = source.fetch_alerts(limit=state.alert_limit)
-    except DataSourceError as exc:
+        analysis_source = _analysis_source(settings)
+    except (DataSourceError, AnalysisError) as exc:
         log.error("data source failure: %s", exc)
         st.error(f"Alerts could not be loaded. {exc}")
         return
 
-    PAGE_RENDERERS[state.page](alerts, source)
+    PAGE_RENDERERS[state.page](alerts, source, analysis_source)
 
 
 if __name__ == "__main__":

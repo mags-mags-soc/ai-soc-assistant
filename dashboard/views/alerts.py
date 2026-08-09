@@ -13,7 +13,11 @@ from ..metrics import compute_metrics
 from ..navigation import PAGE_SUBTITLES, PAGE_TITLES, Page
 
 
-def render(alerts: Sequence[Alert], source: AlertDataSource) -> None:
+def render(
+    alerts: Sequence[Alert],
+    source: AlertDataSource,
+    analysis_source: object | None = None,
+) -> None:
     """Render the alert queue page."""
     metrics = compute_metrics(alerts)
 

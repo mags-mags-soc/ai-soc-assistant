@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Final
 
 DEFAULT_SOURCE: Final[str] = "sample"
+DEFAULT_ANALYSIS_SOURCE: Final[str] = "disabled"
 DEFAULT_PAGE_TITLE: Final[str] = "AI SOC Assistant"
 DEFAULT_ALERT_LIMIT: Final[int] = 50
 MIN_ALERT_LIMIT: Final[int] = 10
@@ -33,6 +34,7 @@ class DashboardSettings:
     """Immutable dashboard settings."""
 
     source: str = DEFAULT_SOURCE
+    analysis_source: str = DEFAULT_ANALYSIS_SOURCE
     page_title: str = DEFAULT_PAGE_TITLE
     alert_limit: int = DEFAULT_ALERT_LIMIT
 
@@ -48,6 +50,10 @@ class DashboardSettings:
         """Build settings from ``DASHBOARD_*`` environment variables."""
         return cls(
             source=os.getenv("DASHBOARD_SOURCE", DEFAULT_SOURCE).strip().lower() or DEFAULT_SOURCE,
+            analysis_source=(
+                os.getenv("DASHBOARD_ANALYSIS_SOURCE", DEFAULT_ANALYSIS_SOURCE)
+                .strip().lower() or DEFAULT_ANALYSIS_SOURCE
+            ),
             page_title=os.getenv("DASHBOARD_PAGE_TITLE", DEFAULT_PAGE_TITLE),
             alert_limit=_env_int("DASHBOARD_ALERT_LIMIT", DEFAULT_ALERT_LIMIT),
         )

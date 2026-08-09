@@ -19,7 +19,11 @@ from ..theme import PALETTE
 RECENT_ALERT_COUNT: Final[int] = 10
 
 
-def render(alerts: Sequence[Alert], source: AlertDataSource) -> None:
+def render(
+    alerts: Sequence[Alert],
+    source: AlertDataSource,
+    analysis_source: object | None = None,
+) -> None:
     """Render the overview page."""
     metrics = compute_metrics(alerts)
 

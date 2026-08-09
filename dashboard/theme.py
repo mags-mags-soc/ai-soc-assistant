@@ -213,3 +213,27 @@ div[data-testid="stDataFrame"] {{
     * {{ animation: none !important; transition: none !important; }}
 }}
 </style>"""
+
+
+#: Extra styles introduced in Sprint 4.2 for the detail page.
+DETAIL_CSS: Final[str] = f"""<style>
+.soc-kv-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px 20px;
+}}
+.soc-kv {{ display: flex; flex-direction: column; gap: 2px; }}
+.soc-kv-label {{
+    font-family: {FONT_MONO};
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: {PALETTE["text_muted"]};
+}}
+.soc-kv-value {{
+    font-family: {FONT_MONO};
+    font-size: 0.82rem;
+    color: {PALETTE["text"]};
+    word-break: break-word;
+}}
+</style>"""
