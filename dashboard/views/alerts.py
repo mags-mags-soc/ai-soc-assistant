@@ -28,4 +28,4 @@ def render(
         metrics=metrics,
     )
     render_severity_spine(metrics)
-    render_alerts_table(list(alerts), height=620)
+    render_alerts_table(list(alerts), height=620, occurrences=source.occurrences)

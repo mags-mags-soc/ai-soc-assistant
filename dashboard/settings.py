@@ -13,6 +13,8 @@ from typing import Final
 
 DEFAULT_SOURCE: Final[str] = "sample"
 DEFAULT_ANALYSIS_SOURCE: Final[str] = "disabled"
+DEFAULT_ALERTS_PATH: Final[str] = "/var/ossec/logs/alerts/alerts.json"
+DEFAULT_MIN_LEVEL: Final[int] = 7
 DEFAULT_PAGE_TITLE: Final[str] = "AI SOC Assistant"
 DEFAULT_ALERT_LIMIT: Final[int] = 50
 MIN_ALERT_LIMIT: Final[int] = 10
@@ -35,6 +37,8 @@ class DashboardSettings:
 
     source: str = DEFAULT_SOURCE
     analysis_source: str = DEFAULT_ANALYSIS_SOURCE
+    alerts_path: str = DEFAULT_ALERTS_PATH
+    min_level: int = DEFAULT_MIN_LEVEL
     page_title: str = DEFAULT_PAGE_TITLE
     alert_limit: int = DEFAULT_ALERT_LIMIT
 
@@ -54,6 +58,8 @@ class DashboardSettings:
                 os.getenv("DASHBOARD_ANALYSIS_SOURCE", DEFAULT_ANALYSIS_SOURCE)
                 .strip().lower() or DEFAULT_ANALYSIS_SOURCE
             ),
+            alerts_path=os.getenv("DASHBOARD_ALERTS_PATH", DEFAULT_ALERTS_PATH),
+            min_level=_env_int("DASHBOARD_MIN_LEVEL", DEFAULT_MIN_LEVEL),
             page_title=os.getenv("DASHBOARD_PAGE_TITLE", DEFAULT_PAGE_TITLE),
             alert_limit=_env_int("DASHBOARD_ALERT_LIMIT", DEFAULT_ALERT_LIMIT),
         )

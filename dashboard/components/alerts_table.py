@@ -22,7 +22,11 @@ def _style_severity(value: object) -> str:
     return _SEVERITY_STYLES.get(str(value), "")
 
 
-def render_alerts_table(alerts: Sequence[Alert], height: int = 460) -> None:
+def render_alerts_table(
+    alerts: Sequence[Alert],
+    height: int = 460,
+    occurrences: dict[str, int] | None = None,
+) -> None:
     """Render alerts as a sortable table, newest first."""
     if not alerts:
         st.markdown(
@@ -33,7 +37,7 @@ def render_alerts_table(alerts: Sequence[Alert], height: int = 460) -> None:
         )
         return
 
-    frame = alerts_to_frame(alerts)
+    frame = alerts_to_frame(alerts, occurrences)
     styled = frame.style.map(_style_severity, subset=["Severity"])
 
     st.dataframe(
@@ -44,6 +48,7 @@ def render_alerts_table(alerts: Sequence[Alert], height: int = 460) -> None:
         column_config={
             "Time": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm:ss"),
             "Level": st.column_config.NumberColumn("Lvl", width="small"),
+            "Seen": st.column_config.NumberColumn("Seen", width="small"),
             "Description": st.column_config.TextColumn("Description", width="large"),
             "Alert ID": st.column_config.TextColumn("Alert ID", width="medium"),
         },

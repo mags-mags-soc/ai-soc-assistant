@@ -17,6 +17,7 @@ from .theme import severity_label
 #: Column order used by the live alerts table.
 COLUMNS: Final[tuple[str, ...]] = (
     "Time",
+    "Seen",
     "Severity",
     "Level",
     "Rule",
@@ -28,15 +29,20 @@ COLUMNS: Final[tuple[str, ...]] = (
 )
 
 
-def alerts_to_frame(alerts: Sequence[Alert]) -> pd.DataFrame:
+def alerts_to_frame(
+    alerts: Sequence[Alert],
+    occurrences: dict[str, int] | None = None,
+) -> pd.DataFrame:
     """Build a display DataFrame, newest alert first.
 
     An empty input produces an empty frame with the correct columns, so the
     table renders consistently whether or not alerts are present.
     """
+    counts = occurrences or {}
     rows = [
         {
             "Time": alert.timestamp,
+            "Seen": counts.get(alert.id, 1),
             "Severity": severity_label(alert.severity),
             "Level": alert.rule.level,
             "Rule": alert.rule.id,

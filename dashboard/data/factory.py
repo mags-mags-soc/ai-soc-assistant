@@ -11,10 +11,14 @@ from typing import Callable, Final
 
 from ..settings import DashboardSettings
 from .base import AlertDataSource, DataSourceError
+from .live import LiveAlertDataSource
 from .sample import SampleAlertDataSource
 
-_REGISTRY: Final[dict[str, Callable[[], AlertDataSource]]] = {
-    "sample": SampleAlertDataSource,
+_REGISTRY: Final[dict[str, Callable[[DashboardSettings], AlertDataSource]]] = {
+    "sample": lambda settings: SampleAlertDataSource(),
+    "live": lambda settings: LiveAlertDataSource(
+        path=settings.alerts_path, min_level=settings.min_level
+    ),
 }
 
 
@@ -36,4 +40,4 @@ def build_data_source(settings: DashboardSettings) -> AlertDataSource:
             f"Unknown data source {settings.source!r}. "
             f"Available: {', '.join(available_sources())}."
         ) from exc
-    return factory()
+    return factory(settings)

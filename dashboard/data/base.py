@@ -30,6 +30,11 @@ class AlertDataSource(Protocol):
         """``True`` when the source is backed by real Wazuh data."""
         ...
 
+    @property
+    def occurrences(self) -> dict[str, int]:
+        """Alert id to how many times it was seen. Empty when not deduplicated."""
+        ...
+
     def fetch_alerts(self, limit: int) -> list[Alert]:
         """Return at most ``limit`` alerts, newest first.
 

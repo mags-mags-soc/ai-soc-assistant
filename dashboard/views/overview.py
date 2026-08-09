@@ -43,7 +43,7 @@ def render(
             f'<div class="soc-section">Newest {RECENT_ALERT_COUNT} detections</div>',
             unsafe_allow_html=True,
         )
-        render_alerts_table(list(alerts)[:RECENT_ALERT_COUNT], height=380)
+        render_alerts_table(list(alerts)[:RECENT_ALERT_COUNT], height=380, occurrences=source.occurrences)
 
     with technique_column:
         st.markdown('<div class="soc-section">Top MITRE techniques</div>', unsafe_allow_html=True)

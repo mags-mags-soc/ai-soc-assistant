@@ -268,6 +268,11 @@ class SampleAlertDataSource:
         """
         self._reference_time = reference_time or datetime.now(timezone.utc)
 
+    @property
+    def occurrences(self) -> dict[str, int]:
+        """Sample alerts are not deduplicated."""
+        return {}
+
     def fetch_alerts(self, limit: int) -> list[Alert]:
         """Return at most ``limit`` sample alerts, newest first."""
         if limit < 1:
