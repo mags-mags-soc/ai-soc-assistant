@@ -41,6 +41,10 @@ class AnalysisSource(Protocol):
         """Return a previously computed analysis, or ``None`` if there is none."""
         ...
 
+    def forget(self, alert: Alert) -> None:
+        """Drop any cached analysis for this alert."""
+        ...
+
     def analyze(self, alert: Alert) -> AIAnalysis:
         """Analyze an alert and return the validated result.
 

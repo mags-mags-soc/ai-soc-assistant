@@ -40,6 +40,10 @@ class AnalyzerAnalysisSource:
         """Return the stored analysis for this alert, if one exists."""
         return self._cache.get(alert.id)
 
+    def forget(self, alert: Alert) -> None:
+        """Drop the cached analysis so the next call hits the provider."""
+        self._cache.pop(alert.id, None)
+
     def analyze(self, alert: Alert) -> AIAnalysis:
         """Analyze the alert, reusing a cached result when available.
 

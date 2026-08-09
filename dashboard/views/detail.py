@@ -44,17 +44,24 @@ def render(
         return
 
     ordered = sort_alerts(alerts)
-    selected = resolve_selection(ordered, st.session_state.get(SELECTED_ALERT_KEY))
-    index = ordered.index(selected) if selected in ordered else 0
+    by_id = {alert.id: alert for alert in ordered}
+    ids = list(by_id)
 
-    chosen = st.selectbox(
+    # Select on the stable alert id: the sample source re-stamps timestamps on
+    # every rerun, so selecting on Alert objects would reset the widget.
+    previous = st.session_state.get(SELECTED_ALERT_KEY)
+    index = ids.index(previous) if previous in by_id else 0
+
+    chosen_id = st.selectbox(
         "Alert",
-        options=ordered,
+        options=ids,
         index=index,
-        format_func=_option_label,
+        format_func=lambda alert_id: _option_label(by_id[alert_id]),
         label_visibility="collapsed",
+        key="alert_picker",
     )
-    st.session_state[SELECTED_ALERT_KEY] = chosen.id
+    st.session_state[SELECTED_ALERT_KEY] = chosen_id
+    chosen = by_id[chosen_id]
 
     details_column, analysis_column = st.columns([1, 1], gap="medium")
     with details_column:

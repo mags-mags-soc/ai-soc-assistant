@@ -54,6 +54,10 @@ def render_ai_analysis(alert: Alert, source: AnalysisSource) -> None:
 
     render_analysis_body(analysis)
 
+    if source.is_available and st.button("Re-analyse", key=f"reanalyse-{alert.id}"):
+        source.forget(alert)
+        st.rerun()
+
 
 def render_analysis_body(analysis: AIAnalysis) -> None:
     """Render the fields of a completed analysis."""

@@ -30,6 +30,9 @@ class DisabledAnalysisSource:
         """Always ``None``: nothing has been analysed."""
         return None
 
+    def forget(self, alert: Alert) -> None:
+        """No-op: nothing is ever cached."""
+
     def analyze(self, alert: Alert) -> AIAnalysis:
         """Always raises: there is no provider to call."""
         raise AnalysisError(_REASON)

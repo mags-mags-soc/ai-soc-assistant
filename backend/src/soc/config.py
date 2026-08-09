@@ -28,6 +28,18 @@ def _env_int(name: str, default: int) -> int:
         raise ValueError(f"Environment variable {name} must be an integer, got {raw!r}") from exc
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"Environment variable {name} must be a boolean, got {raw!r}")
+
+
 def _env_float(name: str, default: float) -> float:
     raw = os.getenv(name)
     if raw is None or raw.strip() == "":
@@ -55,6 +67,7 @@ class Settings:
     ai_timeout: float
     ai_max_retries: int
     ai_temperature: float
+    ai_json_mode: bool = True
 
     @classmethod
     def load(cls) -> "Settings":
@@ -73,6 +86,7 @@ class Settings:
             ai_timeout=_env_float("AI_TIMEOUT", 60.0),
             ai_max_retries=_env_int("AI_MAX_RETRIES", 3),
             ai_temperature=_env_float("AI_TEMPERATURE", 0.2),
+            ai_json_mode=_env_bool("AI_JSON_MODE", True),
         )
 
 

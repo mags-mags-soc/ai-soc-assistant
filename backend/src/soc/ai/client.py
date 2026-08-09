@@ -66,15 +66,20 @@ class AIClient:
 
         for attempt in range(1, attempts + 1):
             try:
-                resp = client.chat.completions.create(
-                    model=self._settings.ai_model,
-                    messages=[
+                kwargs: dict[str, Any] = {
+                    "model": self._settings.ai_model,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ],
-                    temperature=self._settings.ai_temperature,
-                    response_format={"type": "json_object"},
-                )
+                    "temperature": self._settings.ai_temperature,
+                }
+                # OpenAI's json_object mode is not accepted by every
+                # OpenAI-compatible endpoint. When disabled, _extract_json and
+                # the AIAnalysis schema still guarantee valid structured output.
+                if self._settings.ai_json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+                resp = client.chat.completions.create(**kwargs)
                 content = resp.choices[0].message.content
                 if not content or not content.strip():
                     raise AIResponseParseError("AI returned an empty response")
