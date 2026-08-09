@@ -124,10 +124,12 @@ backend/
         ├── pipeline.py
         └── severity.py
 
+dashboard/
 scripts/
 tests/
 
 requirements.txt
+requirements-dashboard.txt
 pytest.ini
 .gitignore
 .env.example

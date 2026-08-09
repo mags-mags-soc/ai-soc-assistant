@@ -1,5 +1,6 @@
 pydantic>=2.9,<3
 python-dotenv>=1.0.1
+requests>=2.32
 
 # --- dev / test ---
 pytest>=8.3
