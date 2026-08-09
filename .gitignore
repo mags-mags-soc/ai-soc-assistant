@@ -9,3 +9,5 @@ htmlcov/
 logs/*.log
 state/*.json
 *.egg-info/
+streamlit.log
+nohup.out

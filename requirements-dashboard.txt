@@ -1,0 +1,6 @@
+# Dashboard (Sprint 4) dependencies.
+# Backend requirements.txt is unchanged; install both in the same venv:
+#   pip install -r requirements.txt -r requirements-dashboard.txt
+# >=1.49 is required for the `width="stretch"` parameter on dataframes/buttons.
+streamlit>=1.49
+pandas>=2.1
