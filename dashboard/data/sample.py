@@ -289,3 +289,10 @@ class SampleAlertDataSource:
             except ValueError as exc:  # pragma: no cover - guards static data
                 raise DataSourceError(f"Invalid sample alert {raw.get('id')!r}: {exc}") from exc
         return alerts
+
+    def fetch_group(self, alert_id: str) -> list[Alert]:
+        """Sample alerts are not deduplicated: each row is its own group."""
+        for alert in self.fetch_alerts(limit=len(_RAW_ALERTS)):
+            if alert.id == alert_id:
+                return [alert]
+        return []

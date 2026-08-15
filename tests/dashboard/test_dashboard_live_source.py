@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from dashboard.data import live as live_module
 from dashboard.data.base import AlertDataSource, DataSourceError
 from dashboard.data.factory import available_sources, build_data_source
 from dashboard.data.live import LiveAlertDataSource, _tail_lines, fingerprint
@@ -162,3 +163,74 @@ def test_settings_read_live_config_from_env(monkeypatch: pytest.MonkeyPatch) -> 
     assert settings.source == "live"
     assert settings.min_level == 11
     assert settings.alerts_path == "/tmp/x.json"
+
+
+# --- Sprint 4.3b: group expansion ---------------------------------------------
+
+def test_fetch_group_returns_every_member(alerts_file: Path) -> None:
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    alerts = source.fetch_alerts(50)
+    noisy = next(alert for alert in alerts if alert.rule.id == "92213")
+    assert len(source.fetch_group(noisy.id)) == 20
+
+
+def test_group_members_share_the_fingerprint(alerts_file: Path) -> None:
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    noisy = next(a for a in source.fetch_alerts(50) if a.rule.id == "92213")
+    members = source.fetch_group(noisy.id)
+    assert {fingerprint(alert) for alert in members} == {fingerprint(noisy)}
+
+
+def test_group_members_are_distinct_events(alerts_file: Path) -> None:
+    """Each member is a real event with its own id and raw payload."""
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    noisy = next(a for a in source.fetch_alerts(50) if a.rule.id == "92213")
+    members = source.fetch_group(noisy.id)
+    assert len({alert.id for alert in members}) == len(members)
+    assert all(alert.raw for alert in members)
+
+
+def test_group_is_newest_first_and_led_by_the_representative(alerts_file: Path) -> None:
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    noisy = next(a for a in source.fetch_alerts(50) if a.rule.id == "92213")
+    members = source.fetch_group(noisy.id)
+    timestamps = [alert.timestamp for alert in members]
+    assert timestamps == sorted(timestamps, reverse=True)
+    assert members[0].id == noisy.id
+
+
+def test_single_occurrence_group_has_one_member(alerts_file: Path) -> None:
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    quiet = next(a for a in source.fetch_alerts(50) if a.rule.id == "5720")
+    assert [alert.id for alert in source.fetch_group(quiet.id)] == [quiet.id]
+
+
+def test_fetch_group_before_fetch_alerts_is_empty(alerts_file: Path) -> None:
+    assert LiveAlertDataSource(alerts_file).fetch_group("1786000.0") == []
+
+
+def test_fetch_group_unknown_id_is_empty(alerts_file: Path) -> None:
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    source.fetch_alerts(50)
+    assert source.fetch_group("does-not-exist") == []
+
+
+def test_groups_are_rebuilt_on_every_fetch(alerts_file: Path) -> None:
+    """A representative from an earlier window must not linger."""
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    everything = source.fetch_alerts(50)
+    survivors = {alert.id for alert in source.fetch_alerts(1)}
+    dropped = [alert for alert in everything if alert.id not in survivors]
+    assert dropped, "the narrowed window must drop at least one group"
+    assert all(source.fetch_group(alert.id) == [] for alert in dropped)
+
+
+def test_group_retention_limit_keeps_the_count_honest(
+    alerts_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Truncating retained members must not distort the occurrence count."""
+    monkeypatch.setattr(live_module, "MAX_GROUP_MEMBERS", 5)
+    source = LiveAlertDataSource(alerts_file, min_level=7)
+    noisy = next(a for a in source.fetch_alerts(50) if a.rule.id == "92213")
+    assert len(source.fetch_group(noisy.id)) == 5
+    assert source.occurrences[noisy.id] == 20

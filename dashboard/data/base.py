@@ -42,3 +42,16 @@ class AlertDataSource(Protocol):
             DataSourceError: If the alerts cannot be retrieved.
         """
         ...
+
+    def fetch_group(self, alert_id: str) -> list[Alert]:
+        """Return every alert that was collapsed into the row ``alert_id``.
+
+        The representative alert is included and the list is newest first.
+        Sources that do not deduplicate return a single-element list. An
+        unknown id yields an empty list rather than raising, so the caller can
+        fall back to the representative it already holds.
+
+        The list may be shorter than the count reported by :attr:`occurrences`
+        when a group exceeds the source's retention limit.
+        """
+        ...

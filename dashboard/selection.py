@@ -15,6 +15,9 @@ from .metrics import sort_alerts
 #: Session-state key holding the id of the currently selected alert.
 SELECTED_ALERT_KEY: Final[str] = "selected_alert_id"
 
+#: Session-state key holding the id of the selected event inside a group.
+SELECTED_EVENT_KEY: Final[str] = "selected_event_id"
+
 
 def find_alert(alerts: Sequence[Alert], alert_id: str | None) -> Alert | None:
     """Return the alert with ``alert_id``, or ``None`` if it is not present."""
@@ -36,3 +39,14 @@ def resolve_selection(alerts: Sequence[Alert], alert_id: str | None) -> Alert | 
     if not alerts:
         return None
     return find_alert(alerts, alert_id) or sort_alerts(alerts)[0]
+
+
+def resolve_event(members: Sequence[Alert], event_id: str | None) -> Alert | None:
+    """Pick which member of a deduplicated group the panels should show.
+
+    Mirrors :func:`resolve_selection`: falls back to the newest member so the
+    panels are never blank while the group has events.
+    """
+    if not members:
+        return None
+    return find_alert(members, event_id) or sort_alerts(members)[0]

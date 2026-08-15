@@ -9,13 +9,14 @@ import streamlit as st
 from soc.models import Alert
 
 from ..metrics import mitre_ids
+from ..tables import event_fields
 from ..theme import PALETTE, severity_label
 
 
 def _rows(alert: Alert) -> list[tuple[str, str]]:
     """Return the label/value pairs shown in the details grid."""
     mapping = alert.mitre
-    return [
+    rows = [
         ("Alert ID", alert.id),
         ("Time", alert.timestamp.strftime("%Y-%m-%d %H:%M:%S %Z")),
         ("Severity", severity_label(alert.severity)),
@@ -30,6 +31,8 @@ def _rows(alert: Alert) -> list[tuple[str, str]]:
         ("MITRE tactics", ", ".join(getattr(mapping, "tactics", []) or []) or "—"),
         ("MITRE techniques", ", ".join(getattr(mapping, "techniques", []) or []) or "—"),
     ]
+    rows.extend((name, value) for name, value in event_fields(alert).items())
+    return rows
 
 
 def render_alert_details(alert: Alert) -> None:
@@ -52,10 +55,15 @@ def render_alert_details(alert: Alert) -> None:
         unsafe_allow_html=True,
     )
 
-    raw = getattr(alert, "full_log", "") or ""
-    if raw:
-        st.markdown('<div class="soc-section">Raw log</div>', unsafe_allow_html=True)
-        st.code(raw, language="text")
+    st.markdown('<div class="soc-section">Raw log</div>', unsafe_allow_html=True)
+    text = (getattr(alert, "full_log", "") or "").strip()
+    if text:
+        st.code(text, language="text")
+    elif isinstance(alert.raw, dict) and alert.raw:
+        # EventChannel alerts have no full_log. Keep the Wazuh document behind a
+        # collapsed expander so it never dominates the page.
+        with st.expander("Show the raw Wazuh document"):
+            st.json(alert.raw, expanded=False)
     else:
         st.markdown(
             f'<div style="color:{PALETTE["text_muted"]};font-size:0.82rem;">'

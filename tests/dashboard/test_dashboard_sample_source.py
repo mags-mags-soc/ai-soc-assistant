@@ -74,3 +74,15 @@ def test_factory_rejects_unknown_source() -> None:
     settings = DashboardSettings(source="does-not-exist")
     with pytest.raises(DataSourceError):
         build_data_source(settings)
+
+
+def test_fetch_group_returns_the_alert_itself(
+    sample_source: SampleAlertDataSource, sample_alerts: list[Alert]
+) -> None:
+    """Sample alerts are not deduplicated: a group is the alert on its own."""
+    target = sample_alerts[2]
+    assert [alert.id for alert in sample_source.fetch_group(target.id)] == [target.id]
+
+
+def test_fetch_group_unknown_id_is_empty(sample_source: SampleAlertDataSource) -> None:
+    assert sample_source.fetch_group("does-not-exist") == []

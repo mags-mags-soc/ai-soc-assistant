@@ -10,7 +10,13 @@ from dashboard.analysis.analyzer_source import AnalyzerAnalysisSource
 from dashboard.analysis.base import AnalysisError, AnalysisSource
 from dashboard.analysis.disabled import DisabledAnalysisSource
 from dashboard.analysis.factory import available_analysis_sources, build_analysis_source
-from dashboard.selection import SELECTED_ALERT_KEY, find_alert, resolve_selection
+from dashboard.selection import (
+    SELECTED_ALERT_KEY,
+    SELECTED_EVENT_KEY,
+    find_alert,
+    resolve_event,
+    resolve_selection,
+)
 from dashboard.settings import DashboardSettings
 from soc.ai.schemas import AIAnalysis, RiskLevel
 from soc.models import Alert
@@ -159,3 +165,23 @@ def test_report_contains_the_alert_id(sample_alerts: list[Alert]) -> None:
     report = build_report(alert, make_analysis())
     assert alert.id in report
     assert report.lstrip().startswith("#")
+
+
+def test_resolve_event_falls_back_to_newest(sample_alerts: list[Alert]) -> None:
+    newest = max(sample_alerts, key=lambda alert: alert.timestamp)
+    assert resolve_event(sample_alerts, None) is newest
+    assert resolve_event(sample_alerts, "stale-id") is newest
+
+
+def test_resolve_event_keeps_a_valid_choice(sample_alerts: list[Alert]) -> None:
+    target = sample_alerts[4]
+    assert resolve_event(sample_alerts, target.id) is target
+
+
+def test_resolve_event_on_empty_input() -> None:
+    assert resolve_event([], None) is None
+
+
+def test_event_session_key_is_stable() -> None:
+    assert SELECTED_EVENT_KEY == "selected_event_id"
+    assert SELECTED_EVENT_KEY != SELECTED_ALERT_KEY

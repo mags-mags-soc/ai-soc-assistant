@@ -28,6 +28,9 @@ SCAN_LINES: Final[int] = 5000
 #: Bytes read per seek when walking the file backwards.
 _BLOCK: Final[int] = 65536
 
+#: Upper bound on how many members of a single group are retained.
+MAX_GROUP_MEMBERS: Final[int] = 500
+
 
 def _tail_lines(path: Path, count: int) -> list[str]:
     """Return the last ``count`` non-empty lines of a file.
@@ -88,11 +91,20 @@ class LiveAlertDataSource:
         self.min_level = min_level
         self.scan_lines = scan_lines
         self._counts: dict[str, int] = {}
+        self._groups: dict[str, list[Alert]] = {}
 
     @property
     def occurrences(self) -> dict[str, int]:
         """Alert id to number of times its fingerprint appeared in the window."""
         return dict(self._counts)
+
+    def fetch_group(self, alert_id: str) -> list[Alert]:
+        """Return the retained members of the group led by ``alert_id``.
+
+        Populated by the preceding :meth:`fetch_alerts` call; an id from an
+        earlier window returns an empty list.
+        """
+        return list(self._groups.get(alert_id, ()))
 
     def fetch_alerts(self, limit: int) -> list[Alert]:
         """Return up to ``limit`` deduplicated alerts, newest first.
@@ -120,22 +132,30 @@ class LiveAlertDataSource:
 
         parsed.sort(key=lambda alert: alert.timestamp, reverse=True)
 
-        counter: Counter[tuple[str, str, str]] = Counter(
-            fingerprint(alert) for alert in parsed
-        )
+        counter: Counter[tuple[str, str, str]] = Counter()
+        members: dict[tuple[str, str, str], list[Alert]] = {}
+        for alert in parsed:
+            key = fingerprint(alert)
+            counter[key] += 1
+            bucket = members.setdefault(key, [])
+            if len(bucket) < MAX_GROUP_MEMBERS:
+                bucket.append(alert)
 
         seen: set[tuple[str, str, str]] = set()
         unique: list[Alert] = []
         counts: dict[str, int] = {}
+        groups: dict[str, list[Alert]] = {}
         for alert in parsed:
             key = fingerprint(alert)
             if key in seen:
                 continue
             seen.add(key)
             counts[alert.id] = counter[key]
+            groups[alert.id] = members[key]
             unique.append(alert)
             if len(unique) >= limit:
                 break
 
         self._counts = counts
+        self._groups = groups
         return unique

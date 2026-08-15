@@ -52,3 +52,12 @@ def test_switching_to_the_alert_queue_page(app: AppTest) -> None:
     result = app.radio[0].set_value(PAGE_TITLES[Page.ALERTS]).run()
     assert not result.exception
     assert len(result.dataframe) == 1
+
+
+def test_detail_page_renders_without_exceptions(app: AppTest) -> None:
+    from dashboard.navigation import PAGE_TITLES, Page
+
+    result = app.radio[0].set_value(PAGE_TITLES[Page.DETAIL]).run()
+    assert not result.exception
+    assert not result.error
+    assert result.selectbox
