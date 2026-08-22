@@ -50,6 +50,12 @@ def _env_float(name: str, default: float) -> float:
         raise ValueError(f"Environment variable {name} must be a float, got {raw!r}") from exc
 
 
+#: Default AI provider. Any OpenAI-compatible endpoint works; the client is
+#: provider-agnostic and only the configuration changes when switching.
+DEFAULT_AI_BASE_URL = "https://api.anthropic.com/v1/"
+DEFAULT_AI_MODEL = "claude-haiku-4-5-20251001"
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable runtime settings."""
@@ -81,8 +87,8 @@ class Settings:
             log_level=os.getenv("SOC_LOG_LEVEL", "INFO").upper(),
             max_read_bytes=_env_int("SOC_MAX_READ_BYTES", 50 * 1024 * 1024),
             ai_api_key=os.getenv("AI_API_KEY", ""),
-            ai_base_url=os.getenv("AI_BASE_URL", "https://routellm.abacus.ai/v1"),
-            ai_model=os.getenv("AI_MODEL", "gpt-4o-mini"),
+            ai_base_url=os.getenv("AI_BASE_URL", DEFAULT_AI_BASE_URL),
+            ai_model=os.getenv("AI_MODEL", DEFAULT_AI_MODEL),
             ai_timeout=_env_float("AI_TIMEOUT", 60.0),
             ai_max_retries=_env_int("AI_MAX_RETRIES", 3),
             ai_temperature=_env_float("AI_TEMPERATURE", 0.2),
