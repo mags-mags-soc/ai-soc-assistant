@@ -26,6 +26,7 @@ from dashboard.analysis.factory import build_analysis_source
 from dashboard.components.sidebar import render_sidebar
 from dashboard.data.base import DataSourceError
 from dashboard.data.factory import build_data_source
+from dashboard.filters import apply_filters
 from dashboard.settings import DashboardSettings
 from dashboard.theme import DETAIL_CSS, build_css
 from dashboard.views import PAGE_RENDERERS
@@ -58,10 +59,15 @@ def main() -> None:
         source = build_data_source(settings)
         alerts = source.fetch_alerts(limit=state.alert_limit)
         analysis_source = _analysis_source(settings)
+        loaded = len(alerts)
+        alerts = apply_filters(alerts, state.filters)
     except (DataSourceError, AnalysisError) as exc:
         log.error("data source failure: %s", exc)
         st.error(f"Alerts could not be loaded. {exc}")
         return
+
+    if state.filters.active:
+        st.caption(f"Filters active: showing {len(alerts)} of {loaded} loaded alerts.")
 
     PAGE_RENDERERS[state.page](alerts, source, analysis_source)
 

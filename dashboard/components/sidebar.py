@@ -6,6 +6,9 @@ from dataclasses import dataclass
 
 import streamlit as st
 
+from ..theme import SEVERITY_ORDER
+
+from ..filters import AlertFilters
 from ..settings import MAX_ALERT_LIMIT, MIN_ALERT_LIMIT, DashboardSettings
 from ..theme import PALETTE
 from ..navigation import PAGE_TITLES, Page
@@ -17,6 +20,7 @@ class SidebarState:
 
     page: Page
     alert_limit: int
+    filters: AlertFilters = AlertFilters()
 
 
 def render_sidebar(settings: DashboardSettings) -> SidebarState:
@@ -48,7 +52,43 @@ def render_sidebar(settings: DashboardSettings) -> SidebarState:
             help="Maximum number of alerts read from the data source.",
         )
 
+        st.divider()
+
+        # Filters narrow the loaded window only; the data source decides what
+        # is loaded in the first place.
+        with st.expander("Filters", expanded=False):
+            severity_choice = st.selectbox(
+                "Minimum severity",
+                options=[None, *SEVERITY_ORDER],
+                format_func=lambda level: "Any" if level is None else level.value.upper(),
+                index=0,
+                key="filter_severity",
+            )
+            agent = st.text_input("Agent", key="filter_agent",
+                                  placeholder="name or id")
+            mitre = st.text_input("MITRE", key="filter_mitre",
+                                  placeholder="T1059, Execution, ...")
+            term = st.text_input("Search", key="filter_term",
+                                 placeholder="rule, description, log")
+
+            if st.button("Clear filters", width="stretch"):
+                for key in ("filter_severity", "filter_agent",
+                            "filter_mitre", "filter_term"):
+                    st.session_state.pop(key, None)
+                st.rerun()
+
+        filters = AlertFilters(
+            min_severity=severity_choice,
+            agent=agent,
+            mitre=mitre,
+            term=term,
+        )
+
+        st.divider()
+
         if st.button("Reload alerts", width="stretch"):
             st.rerun()
 
-    return SidebarState(page=selected, alert_limit=alert_limit)
+    return SidebarState(
+        page=selected, alert_limit=alert_limit, filters=filters
+    )
