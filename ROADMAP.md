@@ -39,4 +39,4 @@ dashboard or the test suite.
 - SMTP is implemented but not configured against a live server.
 - OpenAI is not yet wired up; the AI layer currently targets an
   OpenAI-compatible endpoint via `AI_BASE_URL`.
-- There is no `main.py` entry point yet; the dashboard is the current UI.
+- `main.py` runs the pipeline once; scheduling it is Sprint 5.

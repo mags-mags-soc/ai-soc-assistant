@@ -207,11 +207,17 @@ source .venv/bin/activate
 
 Run the application
 
+Processes new alerts through analysis, notification and reporting. Alerts
+already handled in an earlier run are skipped, so repeated runs do not
+re-bill the AI provider.
+
 ```bash
-python main.py
+python main.py --dry-run          # show what would be processed
+python main.py --limit 1          # process a single alert
+python main.py --min-level 12     # only high-severity alerts
 ```
 
-*(The main entry point will be introduced in a future sprint.)*
+Exit code is 0 on success and 1 when any alert failed.
 
 ---
 
