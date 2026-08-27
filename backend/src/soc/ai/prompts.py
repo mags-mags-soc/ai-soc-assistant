@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from ..models import decoded_event_fields
+
 if TYPE_CHECKING:
     from soc.models import Alert
 
@@ -87,43 +89,9 @@ def _truncate(text: str, limit: int) -> str:
     return text[:limit] + " …[truncated]"
 
 
-#: Decoded Windows event fields worth sending to the model, in priority order.
-_EVENT_FIELDS: tuple[str, ...] = (
-    "targetFilename",
-    "image",
-    "parentImage",
-    "commandLine",
-    "parentCommandLine",
-    "targetImage",
-    "sourceImage",
-    "grantedAccess",
-    "destinationIp",
-    "destinationPort",
-    "queryName",
-    "hashes",
-    "user",
-    "processId",
-)
+def _truncate(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + " …[truncated]"
 
 
-def decoded_event_fields(alert: "Alert") -> dict[str, str]:
-    """Return notable decoded fields from a Windows EventChannel alert.
-
-    Sysmon alerts leave ``full_log`` empty and carry their fields under
-    ``data.win.eventdata``. Only known string fields are returned, so the
-    prompt never receives an entire Wazuh document.
-    """
-    raw = alert.raw if isinstance(alert.raw, dict) else {}
-    data = raw.get("data")
-    if not isinstance(data, dict):
-        return {}
-    win = data.get("win")
-    eventdata = win.get("eventdata") if isinstance(win, dict) else None
-    if not isinstance(eventdata, dict):
-        eventdata = data
-    fields: dict[str, str] = {}
-    for name in _EVENT_FIELDS:
-        value = eventdata.get(name)
-        if isinstance(value, str) and value.strip():
-            fields[name] = _truncate(value.strip(), 400)
-    return fields

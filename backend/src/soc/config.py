@@ -56,6 +56,12 @@ DEFAULT_AI_BASE_URL = "https://api.anthropic.com/v1/"
 DEFAULT_AI_MODEL = "claude-haiku-4-5-20251001"
 
 
+def _env_list(name: str, separator: str = ",") -> tuple[str, ...]:
+    """Read a separated list from the environment, dropping empty entries."""
+    raw = os.getenv(name, "")
+    return tuple(part.strip() for part in raw.split(separator) if part.strip())
+
+
 @dataclass(frozen=True)
 class Settings:
     """Immutable runtime settings."""
@@ -74,6 +80,19 @@ class Settings:
     ai_max_retries: int
     ai_temperature: float
     ai_json_mode: bool = True
+    # Notification settings. Empty values mean "channel not configured";
+    # the pipeline skips a channel rather than failing when it is absent.
+    telegram_token: str = ""
+    telegram_chat_id: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_sender: str = ""
+    smtp_recipients: tuple[str, ...] = ()
+    smtp_use_tls: bool = True
+    # Where incident reports are written.
+    reports_dir: Path = PROJECT_ROOT / "reports"
 
     @classmethod
     def load(cls) -> "Settings":
@@ -93,6 +112,16 @@ class Settings:
             ai_max_retries=_env_int("AI_MAX_RETRIES", 3),
             ai_temperature=_env_float("AI_TEMPERATURE", 0.2),
             ai_json_mode=_env_bool("AI_JSON_MODE", True),
+            telegram_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
+            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID", ""),
+            smtp_host=os.getenv("SMTP_HOST", ""),
+            smtp_port=_env_int("SMTP_PORT", 587),
+            smtp_username=os.getenv("SMTP_USERNAME", ""),
+            smtp_password=os.getenv("SMTP_PASSWORD", ""),
+            smtp_sender=os.getenv("SMTP_SENDER", ""),
+            smtp_recipients=_env_list("SMTP_RECIPIENTS"),
+            smtp_use_tls=_env_bool("SMTP_USE_TLS", True),
+            reports_dir=_env_path("SOC_REPORTS_DIR", PROJECT_ROOT / "reports"),
         )
 
 

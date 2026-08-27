@@ -122,3 +122,46 @@ def _parse_timestamp(value: Any) -> datetime:
         except ValueError:
             pass
     return datetime.now().astimezone()
+
+
+#: Decoded Windows event fields worth surfacing, in priority order.
+NOTABLE_EVENT_FIELDS: tuple[str, ...] = (
+    "targetFilename",
+    "image",
+    "parentImage",
+    "commandLine",
+    "parentCommandLine",
+    "targetImage",
+    "sourceImage",
+    "grantedAccess",
+    "destinationIp",
+    "destinationPort",
+    "queryName",
+    "hashes",
+    "user",
+    "processId",
+)
+
+
+def decoded_event_fields(alert: Alert, limit: int = 400) -> dict[str, str]:
+    """Return notable decoded fields from a Windows EventChannel alert.
+
+    Sysmon alerts leave ``full_log`` empty and carry their fields under
+    ``data.win.eventdata``. Only known string fields are returned, so a caller
+    never has to render or transmit an entire Wazuh document.
+    """
+    raw = alert.raw if isinstance(alert.raw, dict) else {}
+    data = raw.get("data")
+    if not isinstance(data, dict):
+        return {}
+    win = data.get("win")
+    eventdata = win.get("eventdata") if isinstance(win, dict) else None
+    if not isinstance(eventdata, dict):
+        eventdata = data
+    fields: dict[str, str] = {}
+    for name in NOTABLE_EVENT_FIELDS:
+        value = eventdata.get(name)
+        if isinstance(value, str) and value.strip():
+            text = value.strip()
+            fields[name] = text if len(text) <= limit else text[:limit] + " …[truncated]"
+    return fields

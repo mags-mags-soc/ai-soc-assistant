@@ -11,3 +11,7 @@ state/*.json
 *.egg-info/
 streamlit.log
 nohup.out
+
+# Runtime output
+reports/
+state/

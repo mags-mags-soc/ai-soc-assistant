@@ -6,14 +6,28 @@ the Bot API. The HTTP call is isolated so it can be fully mocked in tests.
 
 from __future__ import annotations
 
+import time
+from html import escape
+
 import requests
 
-from ..models import Alert
+from ..models import Alert, decoded_event_fields
 from ..ai.schemas import AIAnalysis
 from .exceptions import NotificationConfigError, NotificationDeliveryError
 
 _API_URL = "https://api.telegram.org/bot{token}/sendMessage"
 _TIMEOUT = 10
+
+#: Telegram rejects messages longer than this many characters.
+_MAX_LENGTH = 4096
+
+#: Decoded fields worth showing on a phone screen. The full set would push the
+#: summary out of view; these are what a first responder acts on.
+_KEY_FIELDS = ("targetFilename", "image", "commandLine", "destinationIp", "user")
+
+#: Delivery is retried on transport errors and Telegram rate limiting.
+_MAX_ATTEMPTS = 3
+_BACKOFF_SECONDS = 2
 
 _RISK_EMOJI = {
     "info": "⚪",
@@ -39,9 +53,21 @@ def build_telegram_message(alert: Alert, analysis: AIAnalysis) -> str:
         f"<b>Confidence:</b> {analysis.confidence_score}/100  |  "
         f"<b>FP:</b> {analysis.false_positive_percent}%",
         "",
-        f"<b>Summary:</b> {analysis.summary}",
+        f"<b>Summary:</b> {escape(analysis.summary)}",
     ]
-    return "\n".join(lines)
+
+    # A Sysmon alert has no full_log, so without these the responder sees the
+    # rule name and nothing about what actually happened.
+    fields = decoded_event_fields(alert)
+    shown = [(k, v) for k, v in fields.items() if k in _KEY_FIELDS]
+    if shown:
+        lines += ["", "<b>Indicators:</b>"]
+        lines += [f"• <code>{escape(k)}</code>: {escape(v)}" for k, v in shown]
+
+    text = "\n".join(lines)
+    if len(text) > _MAX_LENGTH:
+        text = text[: _MAX_LENGTH - 20].rstrip() + "\n… [truncated]"
+    return text
 
 
 class TelegramNotifier:
@@ -64,15 +90,34 @@ class TelegramNotifier:
             "parse_mode": "HTML",
             "disable_web_page_preview": True,
         }
-        try:
-            resp = self._session.post(url, json=payload, timeout=_TIMEOUT)
-        except requests.RequestException as exc:
-            raise NotificationDeliveryError(f"Telegram request failed: {exc}") from exc
+        # A dropped connection or a rate limit must not lose an alert; the
+        # error is only raised once the retries are exhausted.
+        last_error: Exception | None = None
+        resp = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                resp = self._session.post(url, json=payload, timeout=_TIMEOUT)
+            except requests.RequestException as exc:
+                last_error = exc
+                resp = None
+            else:
+                if resp.status_code == 200:
+                    break
+                if resp.status_code not in (429, 500, 502, 503, 504):
+                    raise NotificationDeliveryError(
+                        f"Telegram API returned HTTP {resp.status_code}",
+                        status_code=resp.status_code,
+                    )
+                last_error = NotificationDeliveryError(
+                    f"Telegram API returned HTTP {resp.status_code}",
+                    status_code=resp.status_code,
+                )
+            if attempt < _MAX_ATTEMPTS:
+                time.sleep(_BACKOFF_SECONDS * attempt)
 
-        if resp.status_code != 200:
+        if resp is None or resp.status_code != 200:
             raise NotificationDeliveryError(
-                f"Telegram API returned HTTP {resp.status_code}",
-                status_code=resp.status_code,
+                f"Telegram delivery failed after {_MAX_ATTEMPTS} attempts: {last_error}"
             )
 
         data = resp.json()

@@ -43,7 +43,7 @@ def test_report_contains_key_sections():
     assert "## 📋 Alert Details" in md
     assert "## 🤖 AI Analysis" in md
     assert "### 🔍 Investigation Steps" in md
-    assert "## 📄 Raw Log" in md
+    assert "## 📄 Event Data" in md
 
 
 def test_report_includes_analysis_values():
@@ -90,3 +90,47 @@ def test_write_report_creates_file(tmp_path):
     assert path.exists()
     assert path.name == "incident_7.md"
     assert "Incident Report" in path.read_text(encoding="utf-8")
+
+
+
+def _sysmon_alert():
+    """An EventChannel alert with no full_log, like a real Sysmon event."""
+    from soc.models import Alert
+
+    return Alert.from_wazuh({
+        "id": "1787424469.2353096",
+        "timestamp": "2026-08-22T18:47:49.928+0000",
+        "rule": {"id": "92213", "level": 15, "description": "Executable file dropped"},
+        "agent": {"id": "002", "name": "win11-lab"},
+        "location": "EventChannel",
+        "data": {"win": {"eventdata": {
+            "targetFilename": "C:\\Users\\magsu\\AppData\\Local\\Temp\\dropper.exe",
+            "image": "C:\\Windows\\powershell.exe",
+            "user": "M313M\\magsu",
+        }}},
+    })
+
+
+def test_event_data_falls_back_to_decoded_fields():
+    """Sysmon alerts have no full_log; the report must not be evidence-free."""
+    md = build_markdown_report(_sysmon_alert(), _analysis())
+    assert "targetFilename" in md
+    assert "dropper.exe" in md
+    assert "No log data was attached" not in md
+
+
+def test_full_log_alerts_still_render_a_code_block():
+    md = build_markdown_report(_alert(), _analysis())
+    assert "```" in md.split("## 📄 Event Data")[1]
+
+
+def test_report_without_any_log_data_says_so():
+    from soc.models import Alert
+
+    bare = Alert.from_wazuh({
+        "id": "1", "timestamp": "2026-08-22T18:47:49.928+0000",
+        "rule": {"id": "1", "level": 7, "description": "Bare alert"},
+        "agent": {"id": "000", "name": "server"},
+    })
+    md = build_markdown_report(bare, _analysis())
+    assert "No log data was attached" in md

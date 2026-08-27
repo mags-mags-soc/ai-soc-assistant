@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..models import Alert
+from ..models import Alert, decoded_event_fields
 from ..ai.schemas import AIAnalysis
 
 
@@ -110,11 +110,21 @@ def build_markdown_report(
         "",
         "---",
         "",
-        "## 📄 Raw Log",
+        "## 📄 Event Data",
         "",
-        "```",
-        _truncate(alert.full_log or "—"),
-        "```",
+    ]
+
+    # Windows EventChannel alerts carry no full_log; their decoded fields are
+    # the only record of what actually happened.
+    fields = decoded_event_fields(alert)
+    if alert.full_log and alert.full_log.strip():
+        lines += ["```", _truncate(alert.full_log), "```"]
+    elif fields:
+        lines += [f"- **{name}:** `{value}`" for name, value in fields.items()]
+    else:
+        lines += ["_No log data was attached to this alert._"]
+
+    lines += [
         "",
         "---",
         "",

@@ -137,3 +137,52 @@ def test_no_new_alerts_is_success(alerts_file: Path) -> None:
         ["--dry-run", "--no-state", "--min-level", "99", "--alerts-path", str(alerts_file)]
     )
     assert entry.run(args) == 0
+
+
+class _Config:
+    """Minimal stand-in for Settings, so tests never read the real .env."""
+
+    def __init__(self, **overrides):
+        defaults = dict(
+            telegram_token="", telegram_chat_id="",
+            smtp_host="", smtp_port=587, smtp_username="", smtp_password="",
+            smtp_sender="", smtp_recipients=(), smtp_use_tls=True,
+            reports_dir=Path("/tmp/soc-test-reports"),
+        )
+        defaults.update(overrides)
+        for key, value in defaults.items():
+            setattr(self, key, value)
+
+
+def test_pipeline_skips_unconfigured_channels(monkeypatch) -> None:
+    """An unconfigured channel is not an error; the step is simply skipped."""
+    monkeypatch.setattr(entry, "AlertAnalyzer", lambda: object())
+    pipeline = entry.build_pipeline(_Config())
+    assert pipeline._telegram is None
+    assert pipeline._email is None
+    assert pipeline._report_writer is not None
+
+
+def test_pipeline_builds_telegram_when_configured(monkeypatch) -> None:
+    monkeypatch.setattr(entry, "AlertAnalyzer", lambda: object())
+    pipeline = entry.build_pipeline(_Config(telegram_token="t", telegram_chat_id="c"))
+    assert pipeline._telegram is not None
+    assert pipeline._email is None
+
+
+def test_pipeline_builds_email_when_configured(monkeypatch) -> None:
+    monkeypatch.setattr(entry, "AlertAnalyzer", lambda: object())
+    pipeline = entry.build_pipeline(_Config(
+        smtp_host="smtp.example.com",
+        smtp_sender="soc@example.com",
+        smtp_recipients=("analyst@example.com",),
+    ))
+    assert pipeline._email is not None
+    assert pipeline._telegram is None
+
+
+def test_partial_config_is_ignored(monkeypatch) -> None:
+    """A token without a chat id cannot deliver; do not half-build a channel."""
+    monkeypatch.setattr(entry, "AlertAnalyzer", lambda: object())
+    assert entry.build_pipeline(_Config(telegram_token="t"))._telegram is None
+    assert entry.build_pipeline(_Config(smtp_host="smtp.x.com"))._email is None

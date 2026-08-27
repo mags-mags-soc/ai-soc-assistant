@@ -30,7 +30,11 @@ from soc.ai.analyzer import AlertAnalyzer  # noqa: E402
 from soc.alert_reader import AlertReader, AlertReaderError  # noqa: E402
 from soc.config import settings as default_settings  # noqa: E402
 from soc.models import Alert  # noqa: E402
+from soc.notify.email import EmailNotifier  # noqa: E402
+from soc.notify.exceptions import NotificationConfigError  # noqa: E402
+from soc.notify.telegram import TelegramNotifier  # noqa: E402
 from soc.pipeline import SOCPipeline  # noqa: E402
+from soc.report.markdown_report import write_markdown_report  # noqa: E402
 from soc.state import ProcessedAlerts, StateError  # noqa: E402
 
 #: Alerts processed in one run unless --limit says otherwise. One by default:
@@ -87,14 +91,49 @@ def select_alerts(
     return AlertReader.sort_by_time(candidates)[:limit]
 
 
-def build_pipeline() -> SOCPipeline:
-    """Construct the pipeline with the notifiers that are configured.
+def build_pipeline(config=default_settings) -> SOCPipeline:
+    """Construct the pipeline with whichever channels are configured.
 
-    Notification channels stay optional: the pipeline treats a missing
-    notifier as "skip this step", so an unconfigured lab still gets analysis
-    and reports.
+    Every channel is optional and the pipeline treats a missing one as "skip
+    this step", so an unconfigured lab still gets analysis and reports.
     """
-    return SOCPipeline(analyzer=AlertAnalyzer())
+    telegram = None
+    if config.telegram_token and config.telegram_chat_id:
+        try:
+            telegram = TelegramNotifier(config.telegram_token, config.telegram_chat_id)
+        except NotificationConfigError as exc:
+            log.warning("Telegram is configured but unusable: %s", exc)
+
+    email = None
+    if config.smtp_host and config.smtp_sender and config.smtp_recipients:
+        try:
+            email = EmailNotifier(
+                host=config.smtp_host,
+                port=config.smtp_port,
+                username=config.smtp_username,
+                password=config.smtp_password,
+                sender=config.smtp_sender,
+                recipients=config.smtp_recipients,
+                use_tls=config.smtp_use_tls,
+            )
+        except NotificationConfigError as exc:
+            log.warning("SMTP is configured but unusable: %s", exc)
+
+    def write_report(alert: Alert, analysis) -> str:
+        return str(write_markdown_report(alert, analysis, config.reports_dir))
+
+    log.info(
+        "pipeline channels: telegram=%s email=%s reports=%s",
+        "on" if telegram else "off",
+        "on" if email else "off",
+        config.reports_dir,
+    )
+    return SOCPipeline(
+        analyzer=AlertAnalyzer(),
+        telegram=telegram,
+        email=email,
+        report_writer=write_report,
+    )
 
 
 def run(args: argparse.Namespace) -> int:
