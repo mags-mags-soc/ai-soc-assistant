@@ -201,6 +201,8 @@ SMTP_PASSWORD=
 
 - [Purpose and Roadmap](docs/PURPOSE_AND_ROADMAP.md) — the gap this fills, what
   it does today, its known limitations and where it goes next
+- [Architecture](docs/ARCHITECTURE.md) — how the pieces fit, the two swappable
+  protocol layers, and where the cost boundaries sit
 
 ### Detection engineering
 
