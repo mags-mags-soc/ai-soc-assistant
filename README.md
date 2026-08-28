@@ -3,7 +3,7 @@
 > An AI triage assistant for Wazuh: it answers what an alert means and
 > what to do about it next.
 
-![Alert detail: Sysmon fields on the left, the AI assessment on the right](docs/images/dashboard.png)
+![Overview: queue health, severity distribution and the newest detections](docs/images/overview.png)
 
 ---
 
@@ -30,35 +30,24 @@ Planned Integrations
 
 ## Current Features
 
-- Wazuh Alert Reader
-- Alert Parsing
-- MITRE ATT&CK Mapping
-- AI Threat Analysis
-- Pydantic Validation
-- Telegram Notifications
-- Email Notification Engine
-- Markdown Incident Reports
-- Notification Pipeline
-- Unit Tests
-- Git Versioning
+- Wazuh alert reader with tail-based live source
+- Alert parsing, severity mapping, MITRE ATT&CK extraction
+- AI threat analysis with Pydantic-validated structured output
+- Decoded Sysmon field extraction for Windows EventChannel alerts
+- Streamlit triage dashboard with group expansion, filtering and search
+- Markdown incident reports
+- Telegram and SMTP notification channels
+- Pipeline entry point with a processed-alert store
+- 254 tests, 92% coverage
 
----
+Planned Features
 
-## Planned Features
-
-- Streamlit Dashboard
-- FastAPI REST API
-- Live Alert Monitoring
-- OpenAI Integration
-- Redis Cache
-- PostgreSQL
-- Docker Deployment
-- CI/CD Pipeline
-- Threat Intelligence Integration
-- VirusTotal Integration
-- AbuseIPDB Integration
-- IOC Enrichment
-- Multi-SIEM Support
+- Wazuh REST API ingestion
+- Alert correlation across related events
+- Digest notifications instead of one message per alert
+- Analyst feedback loop on AI assessments
+- IOC enrichment (VirusTotal, AbuseIPDB)
+- Multi-SIEM support
 
 ---
 
@@ -94,10 +83,9 @@ E --> I[Streamlit Dashboard]
 |------------|----------------|
 | Language | Python 3 |
 | SIEM | Wazuh |
-| AI | OpenAI API *(planned integration)* |
+| AI | Any OpenAI-compatible endpoint (Anthropic Haiku 4.5) |
 | Validation | Pydantic v2 |
-| Dashboard | Streamlit *(in development)* |
-| API | FastAPI *(planned)* |
+| Dashboard | Streamlit |
 | Notifications | Telegram Bot API, SMTP |
 | Reports | Markdown |
 | Testing | Pytest |
@@ -116,21 +104,33 @@ ai-soc-assistant/
 backend/
 └── src/
     └── soc/
-        ├── ai/
-        ├── notify/
-        ├── report/
+        ├── ai/                 client, analyzer, prompts, schemas
+        ├── notify/             telegram, email
+        ├── report/             markdown_report
         ├── alert_reader.py
         ├── config.py
         ├── logging_setup.py
         ├── mitre.py
         ├── models.py
         ├── pipeline.py
-        └── severity.py
+        ├── severity.py
+        └── state.py
 
 dashboard/
+├── data/                       AlertDataSource: sample, live
+├── analysis/                   AnalysisSource: disabled, analyzer
+├── components/
+├── views/
+└── filters.py
+
+docs/
+├── detections/
+└── images/
+
 scripts/
 tests/
 
+main.py
 requirements.txt
 requirements-dashboard.txt
 pytest.ini
@@ -177,26 +177,34 @@ pip install -r requirements.txt
 ---
 
 # Configuration
-
-Create a `.env` file.
-
-Example:
+Copy `.env.example` to `.env` and fill in what you need. Every section is
+optional: without an AI key the dashboard runs with analysis disabled, and an
+unconfigured notification channel is skipped rather than failing.
 
 ```text
-OPENAI_API_KEY=
+AI_API_KEY=
+AI_BASE_URL=https://api.anthropic.com/v1/
+AI_MODEL=claude-haiku-4-5-20251001
+AI_JSON_MODE=false
 
 TELEGRAM_BOT_TOKEN=
-
 TELEGRAM_CHAT_ID=
 
 SMTP_HOST=
-
-SMTP_PORT=
-
-SMTP_USER=
-
+SMTP_PORT=587
+SMTP_USERNAME=
 SMTP_PASSWORD=
+SMTP_SENDER=
+SMTP_RECIPIENTS=
+
+DASHBOARD_SOURCE=live
+DASHBOARD_ANALYSIS_SOURCE=analyzer
+DASHBOARD_MIN_LEVEL=7
 ```
+
+`AI_JSON_MODE=false` is required for providers whose OpenAI compatibility layer
+rejects `response_format: json_object`; structured output is still guaranteed
+by Pydantic validation.
 
 ---
 
