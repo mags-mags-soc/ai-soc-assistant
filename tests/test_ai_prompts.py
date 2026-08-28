@@ -58,7 +58,7 @@ def _sysmon_alert(**eventdata):
     return Alert.from_wazuh({
         "id": "1786281753.128285",
         "timestamp": "2026-08-09T13:22:33.622+0000",
-        "agent": {"id": "002", "name": "win11-lab", "ip": "192.168.178.77"},
+        "agent": {"id": "002", "name": "win11-lab", "ip": "10.0.0.77"},
         "rule": {
             "id": "92213", "level": 15,
             "description": "Executable file dropped in folder commonly used by malware",
