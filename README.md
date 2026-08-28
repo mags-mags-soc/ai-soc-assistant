@@ -1,6 +1,9 @@
 # 🤖 AI SOC Assistant
 
-> Enterprise-grade AI-powered SOC Analyst Assistant built with Python, Wazuh, OpenAI, and Streamlit.
+> An AI triage assistant for Wazuh: it answers what an alert means and
+> what to do about it next.
+
+![Alert detail: Sysmon fields on the left, the AI assessment on the right](docs/images/dashboard.png)
 
 ---
 
@@ -196,6 +199,7 @@ SMTP_PASSWORD=
 ```
 
 ---
+
 
 ## Project documentation
 
