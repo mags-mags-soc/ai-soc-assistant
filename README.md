@@ -266,55 +266,40 @@ pytest --cov=backend/src
 
 ---
 
-# Current Project Status
+# Project status
 
-| Sprint | Status |
-|----------|-----------|
-| Sprint 1 — Alert Reader | ✅ Completed |
-| Sprint 2 — AI Engine | ✅ Completed |
-| Sprint 3 — Notification & Reporting | ✅ Completed |
-| Sprint 4 — Streamlit Dashboard | 🚧 In Progress |
-| Sprint 5 — FastAPI REST API | ⏳ Planned |
-| Sprint 6 — Docker Deployment | ⏳ Planned |
-| Sprint 7 — CI/CD Pipeline | ⏳ Planned |
+`v0.5.0` · 254 tests · 92% coverage
 
----
+Sprints 1 through 5 are complete: alert reader, AI engine, notification and
+reporting, the Streamlit dashboard, and the pipeline entry point with its
+processed-alert store.
 
-# Roadmap
-
-## ✅ Completed
-
-- Sprint 1 — Alert Reader
-- Sprint 2 — AI Engine
-- Sprint 3 — Notification & Reporting
-
-## 🚧 In Progress
-
-- Sprint 4 — Streamlit Dashboard
-
-## 📅 Planned
-
-- Sprint 5 — FastAPI REST API
-- Sprint 6 — Docker Deployment
-- Sprint 7 — CI/CD Pipeline
-- Sprint 8 — Threat Intelligence Integration
-- Sprint 9 — Database & Redis
-- Sprint 10 — Production Release (v1.0.0)
-
-For the complete development plan, see:
-
-**ROADMAP.md**
+See **[ROADMAP.md](ROADMAP.md)** for the full sprint table and the known gaps,
+and **[docs/PURPOSE_AND_ROADMAP.md](docs/PURPOSE_AND_ROADMAP.md)** for where
+the project goes next.
 
 ---
 
 # Screenshots
 
-Coming Soon
+### Alert detail
 
-- Dashboard
-- Live Alerts
-- AI Analysis
-- Incident Reports
+A deduplicated row expanded into the individual events behind it, with the AI
+assessment alongside: risk level, confidence and a false-positive estimate.
+
+![Alert detail](docs/images/dashboard.png)
+
+### Incident report
+
+Every analysed alert produces a downloadable Markdown report containing the
+decoded event data, the assessment and the investigation steps.
+
+![Incident report](docs/images/report.png)
+
+Windows EventChannel alerts carry no `full_log`, so the report surfaces the
+decoded Sysmon fields instead of an empty log section:
+
+![Report event data](docs/images/report2.png)
 
 ---
 
@@ -365,9 +350,15 @@ Proxmox Snapshot
 
 | Version | Description |
 |-----------|-----------------------------|
-| v0.1.0 | Sprint 1 — Alert Reader |
-| v0.2.0 | Sprint 2 — AI Engine |
-| v0.3.0 | Sprint 3 — Notification & Reporting |
+| v0.1.0 | Sprint 1 — Alert reader |
+| v0.2.0 | Sprint 2 — AI engine |
+| v0.3.0 | Sprint 3 — Notification and reporting |
+| v0.4.1 | Sprint 4.1 — Dashboard shell |
+| v0.4.2 | Sprint 4.2 — Alert detail, AI panel, report viewer |
+| v0.4.3 | Sprint 4.3a — Live Wazuh source |
+| v0.4.4 | Sprint 4.3b — Group expansion, Sysmon field extraction |
+| v0.4.5 | Sprint 4.3c — Filtering and search |
+| v0.5.0 | Sprint 5 — Entry point, state store, notification channels |
 
 ---
 
@@ -400,11 +391,11 @@ Cybersecurity • SOC Analyst • Blue Team
 Current Version
 
 ```
-v0.3.0
+v0.5.0
 ```
 
 Current Status
 
 ```
-Sprint 3 Stable
+Sprint 5 stable
 ```
