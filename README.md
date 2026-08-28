@@ -197,6 +197,11 @@ SMTP_PASSWORD=
 
 ---
 
+## Project documentation
+
+- [Purpose and Roadmap](docs/PURPOSE_AND_ROADMAP.md) — the gap this fills, what
+  it does today, its known limitations and where it goes next
+
 # Running
 
 Activate the virtual environment
@@ -218,6 +223,18 @@ python main.py --min-level 12     # only high-severity alerts
 ```
 
 Exit code is 0 on success and 1 when any alert failed.
+
+### Scheduling
+
+`main.py` is written to be scheduler-friendly — it skips already-handled
+alerts and reports failure through its exit code — but no timer ships with the
+project. Automation multiplies whatever the alert volume happens to be, so
+rule tuning has to come first: in this lab a single untuned rule produced 175
+benign alerts a day, and scheduling on top of that would have meant hundreds
+of notifications and a daily provider bill for analysing noise.
+
+To schedule it once your ruleset is tuned, a systemd timer calling
+`python main.py --limit N` on an interval is enough.
 
 ---
 
