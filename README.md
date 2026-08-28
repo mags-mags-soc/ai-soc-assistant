@@ -378,7 +378,7 @@ Please create a feature branch before submitting a Pull Request.
 
 # Author
 
-**Maqsud Magsudlu**
+**Magsud Magsudlu**
 
 Cybersecurity • SOC Analyst • Blue Team 
 
