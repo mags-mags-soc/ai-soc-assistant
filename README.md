@@ -202,6 +202,12 @@ SMTP_PASSWORD=
 - [Purpose and Roadmap](docs/PURPOSE_AND_ROADMAP.md) — the gap this fills, what
   it does today, its known limitations and where it goes next
 
+### Detection engineering
+
+- [Rule 92213 — PowerShell execution policy probe](docs/detections/92213-psscriptpolicytest.md)
+  — one rule producing more alerts than every other rule combined, and how it
+  was tuned without losing the evidence
+
 # Running
 
 Activate the virtual environment
