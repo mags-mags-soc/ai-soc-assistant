@@ -17,12 +17,8 @@ Current SIEM Platform
 
 - Wazuh
 
-Planned Integrations
-
-- Elastic Security
-- Microsoft Sentinel
-- Splunk
-- IBM QRadar
+Ingestion is isolated behind a protocol, so another SIEM means a new data
+source rather than a rewrite.
 
 ---
 
@@ -56,23 +52,15 @@ Planned Features
 ```mermaid
 flowchart TD
 
-A[Wazuh SIEM]
-
-A --> B[Alert Reader]
-
-B --> C[Alert Parser]
-
-C --> D[AI Engine]
-
-D --> E[Pipeline]
-
-E --> F[Telegram]
-
-E --> G[Email]
-
-E --> H[Markdown Report]
-
-E --> I[Streamlit Dashboard]
+A[Wazuh manager] --> B[alerts.json]
+B --> C[AlertReader]
+C --> D[Streamlit dashboard]
+C --> E[main.py]
+D --> F[AI engine]
+E --> F
+F --> G[Markdown report]
+F --> H[Telegram]
+F --> I[Email]
 ```
 
 ---
@@ -149,7 +137,7 @@ LICENSE
 Clone the repository
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/ai-soc-assistant.git
+git clone https://github.com/mags-mags-soc/ai-soc-assistant.git
 
 cd ai-soc-assistant
 ```
@@ -221,6 +209,8 @@ by Pydantic validation.
 - [Rule 92213 — PowerShell execution policy probe](docs/detections/92213-psscriptpolicytest.md)
   — one rule producing more alerts than every other rule combined, and how it
   was tuned without losing the evidence
+
+---
 
 # Running
 
@@ -322,7 +312,7 @@ Project Goals
 - Integrate AI into SOC workflows
 - Practice secure software development
 - Improve Git & GitHub workflow
-- Simulate enterprise SOC operations
+- Practice detection engineering against real telemetry
 
 ---
 
