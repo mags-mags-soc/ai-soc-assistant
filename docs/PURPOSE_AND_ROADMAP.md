@@ -1,7 +1,7 @@
 # AI SOC Assistant — Purpose and Roadmap
 
-**Status:** `v0.5.0` · 254 tests · 92% coverage
-**Stack:** Python 3.14 · Pydantic v2 · Streamlit · Wazuh 4.14 · provider-agnostic LLM layer
+**Status:** `v0.5.0` · 243 tests · 90% coverage
+**Stack:** Python 3.11+ · Pydantic v2 · Streamlit · Wazuh 4.14 · provider-agnostic LLM layer
 
 ---
 
@@ -44,7 +44,7 @@ a test suite that stays green, documented architectural decisions, and
 detection-engineering writeups backed by real telemetry from a home lab.
 
 Plenty of candidates can say "I installed Wazuh." Fewer can say "I wrote a
-modular Python application on top of it with 254 tests, a provider-agnostic AI
+modular Python application on top of it with 243 tests, a provider-agnostic AI
 layer, and a tuning writeup showing why one rule was firing 175 times a day on
 benign activity."
 

@@ -1,10 +1,8 @@
-import pytest
-
 from soc.models import Alert
 from soc.ai.schemas import AIAnalysis, RiskLevel
 from soc.ai.exceptions import AIEngineError
 from soc.notify.exceptions import NotificationDeliveryError
-from soc.pipeline import SOCPipeline, PipelineResult
+from soc.pipeline import SOCPipeline
 
 
 def _alert(alert_id="42"):
