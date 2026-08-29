@@ -1,5 +1,9 @@
 # 🤖 AI SOC Assistant
 
+[![CI](https://github.com/mags-mags-soc/ai-soc-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/mags-mags-soc/ai-soc-assistant/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 > An AI triage assistant for Wazuh: it answers what an alert means and
 > what to do about it next.
 
@@ -34,7 +38,7 @@ source rather than a rewrite.
 - Markdown incident reports
 - Telegram and SMTP notification channels
 - Pipeline entry point with a processed-alert store
-- 254 tests, 92% coverage
+- 243 tests, 90% coverage
 
 Planned Features
 
@@ -259,14 +263,14 @@ pytest
 Run tests with coverage
 
 ```bash
-pytest --cov=backend/src
+pytest --cov-report=html
 ```
 
 ---
 
 # Project status
 
-`v0.5.0` · 254 tests · 92% coverage
+`v0.5.0` · 243 tests · 90% coverage
 
 Sprints 1 through 5 are complete: alert reader, AI engine, notification and
 reporting, the Streamlit dashboard, and the pipeline entry point with its
