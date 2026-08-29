@@ -38,17 +38,35 @@ _RISK_EMOJI = {
 }
 
 
+def _redact(text: str, token: str) -> str:
+    """Strip a bot token out of text that is headed for a log or an exception.
+
+    ``requests`` puts the full request URL into its exception messages, and the
+    token lives in that URL. Without this, the first dropped connection writes
+    the bot token into ``logs/soc.log`` in cleartext (CWE-532).
+    """
+    if not token:
+        return text
+    return text.replace(token, "<redacted>")
+
+
 def build_telegram_message(alert: Alert, analysis: AIAnalysis) -> str:
     """Build a compact HTML-formatted Telegram message."""
     emoji = _RISK_EMOJI.get(analysis.risk_level.value, "⚪")
     mitre = ", ".join(alert.mitre.ids) if alert.mitre.ids else "—"
+    # Every value below reaches Telegram inside an HTML message, and all of
+    # them originate outside this process. Wazuh expands $(field) placeholders
+    # into rule descriptions, so an attacker-chosen user name or file name can
+    # land there. Unescaped, a stray "<" makes Telegram reject the message with
+    # HTTP 400 - which is not retried - and the alert is silently never
+    # delivered. Escaping is what stops an attacker suppressing their own alert.
     lines = [
         f"{emoji} <b>SOC ALERT — {analysis.risk_level.value.upper()}</b>",
         "",
-        f"<b>Alert:</b> <code>{alert.id}</code>",
-        f"<b>Agent:</b> {alert.agent.name} ({alert.agent.ip or '—'})",
-        f"<b>Rule:</b> {alert.rule.description} (lvl {alert.rule.level})",
-        f"<b>MITRE:</b> {mitre}",
+        f"<b>Alert:</b> <code>{escape(alert.id)}</code>",
+        f"<b>Agent:</b> {escape(alert.agent.name)} ({escape(alert.agent.ip or '—')})",
+        f"<b>Rule:</b> {escape(alert.rule.description)} (lvl {alert.rule.level})",
+        f"<b>MITRE:</b> {escape(mitre)}",
         "",
         f"<b>Confidence:</b> {analysis.confidence_score}/100  |  "
         f"<b>FP:</b> {analysis.false_positive_percent}%",
@@ -117,7 +135,8 @@ class TelegramNotifier:
 
         if resp is None or resp.status_code != 200:
             raise NotificationDeliveryError(
-                f"Telegram delivery failed after {_MAX_ATTEMPTS} attempts: {last_error}"
+                f"Telegram delivery failed after {_MAX_ATTEMPTS} attempts: "
+                f"{_redact(str(last_error), self._token)}"
             )
 
         data = resp.json()

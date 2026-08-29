@@ -1,3 +1,4 @@
+import requests
 import pytest
 
 from soc.models import Alert
@@ -107,3 +108,49 @@ def test_send_network_exception_raises():
     notifier = TelegramNotifier("tok", "chat", session=session)
     with pytest.raises(NotificationDeliveryError):
         notifier.send(_alert(), _analysis())
+
+
+def test_token_is_never_exposed_in_delivery_errors():
+    """A dropped connection must not write the bot token into the logs.
+
+    requests embeds the request URL - which contains the token - in its
+    exception messages. That message reaches logs/soc.log through the
+    pipeline, so it has to be redacted at the point it is raised.
+    """
+    token = "8123456789:AAF-secret-bot-token-value"
+
+    class _DeadSession:
+        def post(self, *args, **kwargs):
+            raise requests.ConnectionError(
+                "HTTPSConnectionPool(host='api.telegram.org', port=443): "
+                f"Max retries exceeded with url: /bot{token}/sendMessage"
+            )
+
+    notifier = TelegramNotifier(token, "42", session=_DeadSession())
+    with pytest.raises(NotificationDeliveryError) as excinfo:
+        notifier.send(_alert(), _analysis())
+
+    message = str(excinfo.value)
+    assert token not in message
+    assert "<redacted>" in message
+
+
+def test_untrusted_alert_fields_are_html_escaped():
+    """Wazuh expands $(field) into rule descriptions, so attacker-chosen text
+    reaches this message. Unescaped it produces HTML Telegram rejects with a
+    400, which is not retried - the alert would simply never arrive.
+    """
+    alert = _alert()
+    alert.rule.description = 'Login by <b>admin</b> & "root"'
+    alert.agent.name = "win<script>"
+    alert.id = "1<2"
+
+    text = build_telegram_message(alert, _analysis())
+
+    assert "<b>admin</b>" not in text
+    assert "<script>" not in text
+    assert "&lt;b&gt;admin&lt;/b&gt;" in text
+    assert "win&lt;script&gt;" in text
+    assert "1&lt;2" in text
+    # The message's own markup must survive.
+    assert "<b>Rule:</b>" in text

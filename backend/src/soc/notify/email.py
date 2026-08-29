@@ -53,10 +53,10 @@ def build_email_html(alert: Alert, analysis: AIAnalysis) -> str:
     <h2 style="margin:0;">SOC ALERT — {analysis.risk_level.value.upper()}</h2>
   </div>
   <table style="margin-top:12px;border-collapse:collapse;">
-    <tr><td><b>Alert ID</b></td><td>{alert.id}</td></tr>
-    <tr><td><b>Agent</b></td><td>{alert.agent.name} ({alert.agent.ip or '—'})</td></tr>
+    <tr><td><b>Alert ID</b></td><td>{escape(alert.id)}</td></tr>
+    <tr><td><b>Agent</b></td><td>{escape(alert.agent.name)} ({escape(alert.agent.ip or '—')})</td></tr>
     <tr><td><b>Rule</b></td><td>{escape(alert.rule.description)} (level {alert.rule.level})</td></tr>
-    <tr><td><b>MITRE</b></td><td>{mitre}</td></tr>
+    <tr><td><b>MITRE</b></td><td>{escape(mitre)}</td></tr>
     <tr><td><b>Confidence</b></td><td>{analysis.confidence_score}/100</td></tr>
     <tr><td><b>False Positive</b></td><td>{analysis.false_positive_percent}%</td></tr>
   </table>
